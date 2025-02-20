@@ -109,6 +109,11 @@ def read_messages():
         messages = json.load(f)
     except json.decoder.JSONDecodeError:
         messages = []
+        return []
+    try:
+        messages = json.load(f)
+    except json.decoder.JSONDecodeError:
+        messages = []
     f.close()
     return messages
 

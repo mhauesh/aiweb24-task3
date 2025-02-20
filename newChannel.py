@@ -24,13 +24,13 @@ app.app_context().push()  # create an app context before initializing db
 HUB_URL = 'http://localhost:5555'
 HUB_AUTHKEY = '1234567890'
 CHANNEL_AUTHKEY = '0987654321'
-CHANNEL_NAME = "Events of Osnabrück Channel"
+CHANNEL_NAME = "Osnabrück Volunteers Wanted Board"
 CHANNEL_ENDPOINT = "http://localhost:5002" # don't forget to adjust in the bottom of the file
 CHANNEL_FILE = 'newmessages.json'
 CHANNEL_TYPE_OF_SERVICE = 'aiweb24:chat'
 
 # Message constraints
-MAX_MESSAGES = 5  # Keep only the latest 100 messages
+MAX_MESSAGES = 50  # Keep only the latest 50 messages
 MESSAGE_EXPIRY = timedelta(days=30)  # Messages older than a day will be deleted
 BANNED_WORDS = {"spam", "fuck", "scheisse"}  # Banned words list
 # maybe we can use hatewords datsets
@@ -100,16 +100,22 @@ def send_message():
         extra = None
     else:
         extra = message['extra']
+    if not 'body' in message:
+        body = None
+    else:
+        body = message['body']
 
     # Get message details
     message_id = str(uuid.uuid4())
     content = message['content'].strip() # string
     sender = message['sender']  #string
-
+    
     now = datetime.strftime(datetime.now(timezone.utc), '%Y-%m-%d %H:%M:%S')
     timestamp = now
     active = True
 
+    if profanity_check(message['content']):
+        return "No profanity allowed", 400
 
     # add message to messages
     messages = read_messages()
@@ -119,39 +125,14 @@ def send_message():
                      'sender': message['sender'],
                      'timestamp': now,
                      'extra': extra,
-                     'active': True
+                     'active': True,
+                     'body': body  # Ensure body is recorded
                      })
 
     # save updated messages
     save_messages(messages)
 
     return "OK", 200
-
-# Delete the post
-## if the message is deleted by the user, the active status will be False
-# return : message deleted
-@app.route('/messages/<message_id>', methods=['DELETE'])
-def delete_message(message_id):
-    print(f"Delete message request for {message_id}")
-    # if not check_authorization(request):
-    #     return "Invalid authorization", 400
-    # messages = read_messages()
-    # print(f"Before deletion: {messages}")
-    #
-    # for msg in messages:
-    #     if msg['id'] == message_id:
-    #         print(f"Message {msg['id']} deleted")
-    #         messages.delete(msg)
-    #         save_messages(messages)
-    #         return jsonify({'message': 'Message deleted'}), 200
-
-    # for msg in messages:
-    #     if msg['id'] == message_id:
-    #         msg['active'] = False
-    #         save_messages(messages)
-    #         return jsonify({'message': 'Message deleted'}), 200
-
-
 
 # only active message will be displayed
 def get_active_messages():
@@ -160,6 +141,8 @@ def get_active_messages():
     check_messages(messages) # only active messages will be saved in messages
     # Keep only active messages and enforce the limit
     active_messages = [msg for msg in messages if msg.get("active", True)]
+    # Sort messages by timestamp in descending order
+    active_messages.sort(key=lambda x: x['timestamp'], reverse=True)
     return active_messages[-MAX_MESSAGES:]
 
 
@@ -213,7 +196,7 @@ def check_messages(messages=None):
 
 
 # Start development web server
-# run flask --app channel.py register
+# run flask --app newChannel.py register
 # to register channel with hub
 
 if __name__ == '__main__':

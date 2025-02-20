@@ -1,10 +1,10 @@
-1. Add no profanity allowed message
+1. Add no profanity allowed message vv
 
-2. Remove delete message function
+2. Remove delete message function vv
 
-3. Add body text in addition to title
+3. Add body text in addition to title 
 
-4. Add a welcome message that doesn't move - explain the channel, how to phrase the message
+4. Add a welcome message that doesn't move - explain the channel, how to phrase the message vv
 
 5. Generate messages in response to inputs - thank you for your contribution
 
